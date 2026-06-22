@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# gmcli: 個人 Gmail を CLI で読む / 送る 起動スクリプト。
+# 自分の実体の場所からプロジェクトを特定するので、絶対パスは持たない。
+# ~/bin などからシンボリックリンクを張って、どこからでも使える。
+# ファイルパス引数（--body-file / --attach など）は実行時のカレントディレクトリ基準。
+set -euo pipefail
+
+# シンボリックリンクをたどって自分の実体のあるディレクトリを求める（macOS の readlink でも動く方法）
+source="${BASH_SOURCE[0]}"
+while [[ -h "$source" ]]; do
+  dir="$(cd -P "$(dirname "$source")" && pwd)"
+  source="$(readlink "$source")"; [[ "$source" != /* ]] && source="$dir/$source"
+done
+project_dir="$(cd -P "$(dirname "$source")" && pwd)"
+
+# 認証情報を .env から読み込む
+set -a
+[ -f "$project_dir/.env" ] && . "$project_dir/.env"
+set +a
+
+# mise.toml で固定した python を解決する（CWD は変えないのでファイル引数はカレント基準のまま）
+py="$(cd "$project_dir" && mise which python3)"
+if [[ -z "$py" || ! -x "$py" ]]; then
+  echo "gmcli: python を解決できません。$project_dir で 'mise install' を実行してください。" >&2
+  exit 1
+fi
+
+exec "$py" "$project_dir/gmcli.py" "$@"

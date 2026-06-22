@@ -14,7 +14,13 @@
    ```
 
 3. python は [mise](https://mise.jdx.dev/) が `mise.toml` の指定（3.13）で解決する。
-4. `~/bin/gmcli` のラッパー経由で実行する（このリポジトリに cd して `.env` を読み込み、python を呼ぶ）。
+4. 起動スクリプト `gmcli` を PATH の通った場所からシンボリックリンクする:
+
+   ```sh
+   ln -s "$PWD/gmcli" ~/bin/gmcli
+   ```
+
+   `gmcli` は自分の実体位置からこのリポジトリを特定し、`.env` を読み込んで mise の python で `gmcli.py` を実行する（絶対パスを持たないので別の場所へ移しても symlink を張り直すだけで動く）。カレントディレクトリは変えないため、`--body-file` / `--attach` のパスは実行時のカレント基準。
 
 ## 使い方
 
@@ -76,6 +82,7 @@ gmcli send -t a@example.com -s 確認 -b test --dry-run
 ## 構成
 
 ```
+gmcli           起動スクリプト（symlink して使う・絶対パスを持たない）
 gmcli.py        本体（read / send サブコマンド）
 mise.toml       python のバージョン指定
 .env            認証情報（gitignore・各自で用意）
